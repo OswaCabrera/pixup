@@ -19,12 +19,7 @@ public class JpaDiscoRepository implements DiscoRepository {
 
     @Override
     public Disco save(Disco disco) {
-        Optional<Disco> discos = findByTituloAndArtista(disco.getTitulo(), disco.getArtista().getId());
-        if(discos.isPresent()) {
-            throw new DiscoExistsException();
-        } else {
-            entityManager.persist(disco);
-        }
+        entityManager.persist(disco);
         return disco;
     }
 

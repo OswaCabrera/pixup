@@ -2,7 +2,8 @@ package unam.diplomado.pixup.domain;
 
 public class DiscoExistsException extends RuntimeException{
 
-            public DiscoExistsException() {
-                super("El disco ya existe.");
+            public DiscoExistsException(String titulo, String artista) {
+
+                super("El disco " + titulo + " del artista " + artista + " ya existe");
             }
 }
