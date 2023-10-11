@@ -3,12 +3,12 @@ package unam.diplomado.pixup.service;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import unam.diplomado.pixup.domain.*;
-import unam.diplomado.pixup.repository.ArtistaRepository;
-import unam.diplomado.pixup.repository.DiscoRepository;
-import unam.diplomado.pixup.repository.DisqueraRepository;
-import unam.diplomado.pixup.repository.GeneroMusicalRepository;
+import unam.diplomado.pixup.repository.*;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.logging.FileHandler;
+import java.util.logging.Logger;
 
 public class DiscoServiceImpl implements DiscoService {
 
@@ -24,24 +24,15 @@ public class DiscoServiceImpl implements DiscoService {
     @Inject
     private DiscoRepository discoRepository;
 
+    @Inject
+    private CancionRepository cancionRepository;
+
     @Override
     @Transactional(value=Transactional.TxType.REQUIRED)
     public Disco registrarDisco(Disco disco) {
-           // validacion disquera
-        if (disco.getDisquera() == null ||
-                disco.getDisquera().getId() == null) {
-            throw new DisqueraRequiredException();
-        }else {
-            Optional<Disquera> disquera = disqueraRepository.findById(disco.getDisquera().getId());
-            if (disquera.isEmpty()) {
-                throw new DisqueraNotFoundException();
-            }
-            disco.setDisquera(disquera.get());
-        }
 
         // validacion artista
-        if (disco.getArtista() == null ||
-                disco.getArtista().getId() == null) {
+        if (disco.getArtista() == null || disco.getArtista().getId() == null) {
             throw new ArtistaRequiredException();
         }else {
             Optional<Artista> artista = artistaRepository.findById(disco.getArtista().getId());
@@ -49,6 +40,13 @@ public class DiscoServiceImpl implements DiscoService {
                 throw new ArtistaNotFoundException(artista.get().getId());
             }
             disco.setArtista(artista.get());
+        }
+
+        // validacion disco duplicado
+        Optional<Disco> discoExistente =
+                discoRepository.findByTituloAndArtista(disco.getTitulo(), disco.getArtista().getId());
+        if (discoExistente.isPresent()) {
+            throw new DiscoExistsException(disco.getTitulo(), disco.getArtista().getNombre());
         }
 
         // validacion generoMusical
@@ -63,15 +61,21 @@ public class DiscoServiceImpl implements DiscoService {
             disco.setGeneroMusical(generoMusical.get());
         }
 
-        // validacion disco duplicado
-        Optional<Disco> discoExistente =
-                discoRepository.findByTituloAndArtista(disco.getTitulo(), disco.getArtista().getId());
-        if (discoExistente.isPresent()) {
-            throw new DiscoExistsException(disco.getTitulo(), disco.getArtista().getNombre());
+        // validacion disquera
+        if (disco.getDisquera() == null ||
+                disco.getDisquera().getId() == null) {
+            throw new DisqueraRequiredException();
+        }else {
+            Optional<Disquera> disquera = disqueraRepository.findById(disco.getDisquera().getId());
+            if (disquera.isEmpty()) {
+                throw new DisqueraNotFoundException();
+            }
+            disco.setDisquera(disquera.get());
         }
+
 
         discoRepository.save(disco);
 
-        return null;
+        return disco;
     }
 }
